@@ -27,7 +27,6 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
-
 import vn.hus.nlp.tokenizer.tokens.TaggedWord;
 
 
@@ -41,6 +40,7 @@ public class VietnameseTokenizer extends Tokenizer {
     private List<TaggedWord> pending = new CopyOnWriteArrayList<>();
     private int offset = 0;
     private int pos = 0;
+
 
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
     private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
@@ -57,18 +57,18 @@ public class VietnameseTokenizer extends Tokenizer {
 
     private void tokenize() throws IOException {
         inputText = IOUtils.toString(input);
-        
+
         inputText = this.lowercase(inputText);
         final List<TaggedWord> result = tokenizer.tokenize(new StringReader(inputText));
         if (result != null) {
             pending.addAll(result);
         }
     }
-    
+
     private String lowercase(String input) {
-    		Locale vietnamLocale = new Locale("vi", "VN");
-    		String lowercase = input.toLowerCase(vietnamLocale);
-    		return lowercase;
+        Locale vietnamLocale = new Locale("vi", "VN");
+        String lowercase = input.toLowerCase(vietnamLocale);
+        return lowercase;
     }
 
     @Override
@@ -90,6 +90,9 @@ public class VietnameseTokenizer extends Tokenizer {
                 typeAtt.setType(String.format("<%s>", word.getRule().getName().toUpperCase()));
                 termAtt.copyBuffer(word.getText().toCharArray(), 0, length);
                 final int start = inputText.indexOf(word.getText(), offset);
+                if (start < 0 || start + length < start) {
+                    return false;
+                }         
                 offsetAtt.setOffset(correctOffset(start), offset = correctOffset(start + length));
                 return true;
             }
